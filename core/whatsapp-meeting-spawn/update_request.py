@@ -6,7 +6,7 @@ Mutações controladas em meeting-requests/<id>.json. Sub-comandos:
       Avança last_seen_reply_at_utc + adiciona ids em processed_message_ids.
 
   set-email --id X --email Y
-  set-modality --id X --modality meet|presencial_hiker|presencial_outro [--location "..."]
+  set-modality --id X --modality meet|presencial_office|presencial_outro [--location "..."]
   set-chosen-slot --id X --index N
   mark-terminal --id X --status <invite_created|cancelled|declined|expired|user_handles> --note "..."
   send-followup --id X --text "..."  (envia WhatsApp + grava last_outbound_*)
@@ -144,7 +144,7 @@ def main():
 
     sm = sub.add_parser("set-modality")
     sm.add_argument("--id", required=True)
-    sm.add_argument("--modality", required=True, choices=["meet", "presencial_hiker", "presencial_outro", "almoco", "tbd"])
+    sm.add_argument("--modality", required=True, choices=["meet", "presencial_office", "presencial_outro", "almoco", "tbd"])
     sm.add_argument("--location", default="")
     sm.set_defaults(fn=cmd_set_modality)
 

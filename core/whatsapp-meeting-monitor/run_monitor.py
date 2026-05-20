@@ -60,7 +60,7 @@ SLOT_PICK_REGEX = [
 EMAIL_REGEX = re.compile(r"[\w.+\-]+@[\w\-]+\.[\w.\-]+")
 
 ONLINE_PATTERNS = [r"\b(?:online|meet|video|v[ií]deo|call|chamada|remoto|zoom|teams)\b"]
-PRESENCIAL_HIKER_PATTERNS = [r"\b(?:savassi|escrit[oó]rio|hiker)\b"]
+PRESENCIAL_OFFICE_PATTERNS = [r"\b(?:escrit[oó]rio|office)\b"]
 PRESENCIAL_GENERIC_PATTERNS = [r"\bpresencial\b", r"\bpessoalmente\b"]
 
 OUTRO_HORARIO_PATTERNS = [
@@ -207,11 +207,11 @@ def detect_slot_index(text: str, slots_offered):
 
 
 def detect_modality(text: str):
-    """Retorna 'meet', 'presencial_hiker', 'presencial_outro' ou None."""
+    """Retorna 'meet', 'presencial_office', 'presencial_outro' ou None."""
     if has_any(text, ONLINE_PATTERNS):
         return "meet", None
-    if has_any(text, PRESENCIAL_HIKER_PATTERNS):
-        return "presencial_hiker", None
+    if has_any(text, PRESENCIAL_OFFICE_PATTERNS):
+        return "presencial_office", None
     if has_any(text, PRESENCIAL_GENERIC_PATTERNS):
         loc_match = re.search(r"presencial\s+(?:em|no|na|aqui no|ali no|l[aá] no)\s+([\w\s\-]{3,40})", text.lower())
         return "presencial_outro", loc_match.group(1).strip() if loc_match else None

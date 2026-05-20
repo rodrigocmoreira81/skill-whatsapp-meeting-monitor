@@ -3,7 +3,7 @@
 Encontra slots livres no Calendar do Rodrigo seguindo regras de horário comercial.
 
 Calendars considerados (busy = qualquer um deles ocupado):
-  rodrigo@hiker.ventures, rodrigo@smartalk.com.br, ri@hiker.ventures, Runna
+  $OWNER_EMAIL (+ aliases via $OWNER_EMAIL_ALIASES)
 
 Regras:
 - Janela: a partir de amanhã 9h BRT até +<days-ahead> dias úteis 19h

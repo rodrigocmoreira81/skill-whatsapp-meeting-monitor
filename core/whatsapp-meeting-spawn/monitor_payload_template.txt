@@ -35,10 +35,10 @@ PASSO 4 — Classificar todas as newReplies (combinadas em ordem cronológica) e
 
 Se `modality == "tbd"`, primeiro resolva a preferência de formato antes de criar invite:
 - Se a resposta indicar online/remoto/meet/video/chamada: exec(update_request.py set-modality --id {REQUEST_ID} --modality meet)
-- Se indicar presencial na Hiker/escritório/Savassi: exec(update_request.py set-modality --id {REQUEST_ID} --modality presencial_hiker)
+- Se indicar presencial na <office_keywords>: exec(update_request.py set-modality --id {REQUEST_ID} --modality presencial_office)
 - Se indicar presencial com outro local claro: exec(update_request.py set-modality --id {REQUEST_ID} --modality presencial_outro --location "<local>")
 - Se confirmar slot/email mas NÃO indicar online vs presencial: exec(update_request.py send-followup --id {REQUEST_ID} --text "Perfeito. Prefere online ou presencial? Se for presencial, onde?") e message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* confirmou slot/email, pedi preferência online vs presencial.") → Termine.
-- Se indicar presencial mas NÃO disser onde nem Hiker/escritório: exec(update_request.py send-followup --id {REQUEST_ID} --text "Perfeito. Presencial onde vc prefere?") e message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* preferiu presencial, pedi o local.") → Termine.
+- Se indicar presencial mas NÃO disser onde nem <org>/escritório: exec(update_request.py send-followup --id {REQUEST_ID} --text "Perfeito. Presencial onde vc prefere?") e message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* preferiu presencial, pedi o local.") → Termine.
 
 (A) CONFIRMOU UM DOS SLOTS_OFFERED + email válido já existe no JSON OU veio em alguma reply:
   → exec(update_request.py set-chosen-slot --id {REQUEST_ID} --index <N>)

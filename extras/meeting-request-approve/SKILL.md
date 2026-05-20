@@ -35,14 +35,14 @@ exec(command="python3 /root/.openclaw/workspace/skills/meeting-request-approve/m
 
 Inspecione `modality` do request. Existem 2 caminhos de parsing.
 
-#### CAMINHO 1 — modality ∈ {meet, presencial_hiker, presencial_outro, almoco, tbd}
+#### CAMINHO 1 — modality ∈ {meet, presencial_office, presencial_outro, almoco, tbd}
 
 Normalize (trim, lowercase, sem acento). Mapeie para `action` + `modality` + `duration`:
 
 | Resposta | action | modality | duration |
 |---|---|---|---|
 | `sim`, `ok`, `marca`, `pode`, `vai`, `👍`, `✅` | sim | meet | 60 |
-| `sim hiker`, `hiker`, `presencial`, `escritorio`, `🏢` | sim | presencial_hiker | 60 |
+| `sim escritorio`, `escritorio`, `presencial`, `escritorio`, `🏢` | sim | presencial_office | 60 |
 | `sim 30`, `sim 30min`, `30min`, `30`, `⏱️` | sim | meet | 30 |
 | `sim almoco`, `sim almoço`, `almoco`, `almoço`, `🍴`, `🍽️` | sim | almoco | 60 |
 | `não`, `nao`, `n`, `👎`, `❌` | nao | — | — |
@@ -50,7 +50,7 @@ Normalize (trim, lowercase, sem acento). Mapeie para `action` + `modality` + `du
 
 Texto livre com confirmação ("sim mas só dia 28 à tarde"): action=`sim`, modality preservada do detector, capture restante em `--free-text`.
 
-Ambiguidade ("talvez"): reply "Não entendi — responde `sim`, `sim hiker`, `sim 30min`, `sim almoco`, `não`, ou `eu marco`. Ou reaja: 👍 / 🏢 / ⏱️ / 🍴 / 👎 / 🙋." e pare.
+Ambiguidade ("talvez"): reply "Não entendi — responde `sim`, `sim escritorio`, `sim 30min`, `sim almoco`, `não`, ou `eu marco`. Ou reaja: 👍 / 🏢 / ⏱️ / 🍴 / 👎 / 🙋." e pare.
 
 → exec approve_request.py com `--action <act> --modality <mod> --duration <dur>` (sem `--broker-choice`).
 
@@ -85,7 +85,7 @@ Reply no thread:
 | Caso | reply |
 |---|---|
 | sim (meet, 60) | "✅ Anotado. Vou marcar Meet 1h com **<contact>**. Disparando agora." |
-| sim (presencial_hiker, 60) | "✅ Anotado. Vou marcar 1h presencial na Hiker com **<contact>** (incluo recepção pra sala). Disparando agora." |
+| sim (presencial_office, 60) | "✅ Anotado. Vou marcar 1h presencial no escritório com **<contact>** (incluo recepção pra sala). Disparando agora." |
 | sim (meet, 30) | "✅ Anotado. Vou marcar Meet 30min com **<contact>**. Disparando agora." |
 | sim (almoco, 60) | "✅ Anotado. Vou marcar almoço com **<contact>**. Disparando agora." |
 | brokered + sim_N + proposes | "✅ Anotado. Vou confirmar opção <N> com **<contact>** (marcação com **<target_contact>**)." |

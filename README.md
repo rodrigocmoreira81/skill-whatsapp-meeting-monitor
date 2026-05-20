@@ -116,7 +116,6 @@ skill-whatsapp-meeting-monitor/
 ├── extras/
 │   └── meeting-request-approve/       ← approval automático via reaction Slack (opcional)
 └── scripts/
-    ├── _patch.py                      ← script que gerou esta versão portável (ignore)
     └── cron-setup.sh                  ← exemplos de comandos pra criar os crons
 ```
 
@@ -127,7 +126,7 @@ skill-whatsapp-meeting-monitor/
 - **Regex do detector é português-BR e específico:** vocabulário como "vamos marcar", "topa um café", "marca com fulano". Você vai querer expandir conforme seu uso. Veja `REQUEST_PATTERNS` em `core/whatsapp-meeting-monitor/detect_meeting_requests.py`.
 - **Bot Slack precisa estar no canal** pra postar arquivos. `chat:write.public` cobre mensagens, mas não cobre `files.completeUploadExternal` — chama `conversations.join` antes.
 - **Evolution API tem latência** — mensagens podem aparecer 10-30s após chegarem ao WhatsApp. Considere isso ao ajustar `--floor-hours` do detector.
-- **Calendar via gog é Hiker-específico** — você provavelmente vai trocar por google-api-python-client. A skill já isola isso em `create_calendar_invite.py` e `check_calendar_slots.py`.
+- **Calendar via gog (CLI Anthropic) é um exemplo de stack** — você provavelmente vai trocar por google-api-python-client. A skill já isola isso em `create_calendar_invite.py` e `check_calendar_slots.py`.
 
 ---
 

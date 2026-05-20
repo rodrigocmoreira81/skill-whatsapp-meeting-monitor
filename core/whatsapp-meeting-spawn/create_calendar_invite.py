@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Cria evento no Google Calendar (rodrigo@hiker.ventures) pra um meeting-request confirmado.
+Cria evento no Google Calendar ($OWNER_EMAIL) pra um meeting-request confirmado.
 
 Lê meeting-requests/<id>.json (precisa: contact, email, modality, chosen_slot, duration_min, location_text se aplicavel).
-Inclui $OFFICE_RECEPTION_EMAIL como convidado se modality=presencial_hiker.
+Inclui $OFFICE_RECEPTION_EMAIL como convidado se modality=presencial_office.
 Cria conferência Google Meet se modality=meet.
 
 Atualiza JSON: event_id, invite_link, status=invite_created, completed_at_utc.
@@ -18,23 +18,23 @@ from datetime import datetime, timezone
 
 REQUESTS_DIR = os.path.join(os.environ.get("WORKSPACE_DIR", os.environ.get("WORKSPACE_DIR", "/root/.openclaw/workspace")), "memory/meeting-requests")
 PRIMARY = os.environ.get("OWNER_EMAIL", "")
-RECEPCAO_HIKER = os.environ.get("OFFICE_RECEPTION_EMAIL", "")
-HIKER_LOCATION = os.environ.get("OFFICE_ADDRESS", "")
+OFFICE_RECEPTION = os.environ.get("OFFICE_RECEPTION_EMAIL", "")
+OFFICE_LOCATION = os.environ.get("OFFICE_ADDRESS", "")
 
 
 def summary_for(modality, contact):
     if modality == "almoco":
-        return f"Almoço Rodrigo <> {contact}"
-    if modality == "presencial_hiker":
-        return f"Rodrigo <> {contact} (Hiker)"
+        return f"Almoço {os.environ.get('OWNER_NAME', 'Owner')} <> {contact}"
+    if modality == "presencial_office":
+        return f"{os.environ.get('OWNER_NAME', 'Owner')} <> {contact} (office)"
     if modality == "presencial_outro":
-        return f"Rodrigo <> {contact}"
-    return f"Rodrigo <> {contact}"
+        return f"{os.environ.get('OWNER_NAME', 'Owner')} <> {contact}"
+    return f"{os.environ.get('OWNER_NAME', 'Owner')} <> {contact}"
 
 
 def location_for(modality, location_text):
-    if modality == "presencial_hiker":
-        return HIKER_LOCATION
+    if modality == "presencial_office":
+        return OFFICE_LOCATION
     if modality in ("almoco", "presencial_outro"):
         return location_text or ""
     return ""  # meet: location vazia, Meet via conference
@@ -47,8 +47,8 @@ def description_for(modality, contact):
 
 def attendees_for(modality, contact_email):
     a = [contact_email]
-    if modality == "presencial_hiker":
-        a.append(RECEPCAO_HIKER)
+    if modality == "presencial_office":
+        a.append(OFFICE_RECEPTION)
     return a
 
 

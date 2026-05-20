@@ -6,7 +6,7 @@
 
 ## Casos de falha (entrada → ação errada → correção)
 
-**1. `monitor-sthella-xa-cana-cafe` (cron 55aac68b, 2026-05-14 a 16)** — payload LLM com `CONTEXTO ATUAL: ainda não confirmou` hardcoded; `check_replies.py` usava `last_outbound_at_utc` como `since`; sem self-disable em terminal.
+**1. `monitor-contato-loop-cafe` (cron 55aac68b, 2026-05-14 a 16)** — payload LLM com `CONTEXTO ATUAL: ainda não confirmou` hardcoded; `check_replies.py` usava `last_outbound_at_utc` como `since`; sem self-disable em terminal.
    - Sintoma: "<contato-X> respondeu sem confirmar" cuspido no Slack a cada 2h por 24h+ DEPOIS do invite ter sido criado.
    - Correção: cron disable manual; PLAYBOOK criado com regras 1-7.
 
@@ -34,7 +34,7 @@ Arquivo `memory/meeting-requests/<id>.json` é a ÚNICA fonte de verdade. Campos
 - `jid`: WhatsApp JID principal
 - `jid_alt`: JIDs alternativos (LID, telefone) se houver
 - `status`: `pending_approval` | `approved` | `monitoring` | `invite_created` | `declined` | `expired`
-- `modality`: `meet` (default) | `presencial_hiker` | `presencial_outro`
+- `modality`: `meet` (default) | `presencial_office` | `presencial_outro`
 - `duration_min`: 60 (default)
 - `last_outbound_at_utc`: timestamp da nossa última msg enviada
 - `last_seen_reply_at_utc`: timestamp da última msg DELA que processamos
@@ -78,7 +78,7 @@ O `run_monitor.py` faz todo o trabalho em Python (sem LLM no loop): lê estado, 
 
 - **Duração default:** 60min (override só se Rodrigo especificou).
 - **Modalidade default:** Google Meet (quando Rodrigo só disse "sim" sem especificar).
-- **Presencial na Hiker:** location `"$OFFICE_ADDRESS"`. **OBRIGATÓRIO:** adicionar `$OFFICE_RECEPTION_EMAIL` como convidado — staff do prédio usa o invite pra reservar sala. Sem isso <owner> chega sem sala.
+- **Presencial no escritório:** location `"$OFFICE_ADDRESS"`. **OBRIGATÓRIO:** adicionar `$OFFICE_RECEPTION_EMAIL` como convidado — staff do prédio usa o invite pra reservar sala. Sem isso <owner> chega sem sala.
 - Convidado principal: e-mail do contato (não da recepção).
 - Timezone: `America/Sao_Paulo`.
 

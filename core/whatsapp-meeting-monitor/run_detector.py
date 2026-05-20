@@ -86,8 +86,8 @@ def classify(candidate):
         modality = "almoco"
     elif any(x in low for x in ["call", "meet", "zoom", "online", "vídeo", "video"]):
         modality = "meet"
-    elif any(x in low for x in ["savassi", "escritório", "escritorio", "hiker"]):
-        modality = "presencial_hiker"
+    elif any(x in low for x in [k for k in os.environ.get("OFFICE_KEYWORDS", "escritorio,office").split(",")]):
+        modality = "presencial_office"
     broker_mode = None
     target_contact = None
     proposed_slots_text = None
@@ -133,7 +133,7 @@ def slack_message(item):
         if item.get("broker_mode") == "proposes":
             return f"📨 *{item['contact']}* pediu agenda pra você com *{target}*.\n> _{item['snippet']}_\nHorários propostos pelo broker: {item.get('proposed_slots_text') or item['snippet']}\n\nResponda na thread:\n• sim ou sim 1 ou 👍 — confirma 1º horário proposto\n• sim 2 — confirma 2º horário\n• sim 3 — confirma 3º horário\n• outra ou 🔄 — Russ propõe alternativas pro broker\n• não ou 👎 — recusa"
         return f"📨 *{item['contact']}* pediu opções de agenda pra você com *{target}*.\n> _{item['snippet']}_\nBroker pede opções pra repassar.\n\nResponda na thread:\n• sim ou 👍 — Russ manda 3 slots pro broker repassar\n• não ou 👎 — recusa"
-    return f"📨 *{item['contact']}* pediu agenda.\n> _{item['snippet']}_\nModalidade detectada: {item['modality']}\n\nResponda na thread (texto OU reação na mensagem):\n• sim ou 👍 — Meet 1h\n• sim hiker ou 🏢 — presencial Savassi 1h\n• sim 30min ou ⏱️ — Meet 30min\n• sim almoco ou 🍴 — almoço Moema/Maru\n• não ou 👎 — arquiva\n• eu marco ou 🙋 — você assume"
+    return f"📨 *{item['contact']}* pediu agenda.\n> _{item['snippet']}_\nModalidade detectada: {item['modality']}\n\nResponda na thread (texto OU reação na mensagem):\n• sim ou 👍 — Meet 1h\n• sim escritorio ou 🏢 — presencial 1h\n• sim 30min ou ⏱️ — Meet 30min\n• sim almoco ou 🍴 — almoço local\n• não ou 👎 — arquiva\n• eu marco ou 🙋 — você assume"
 
 
 def create_request(item, slack_ts, dry_run=False):

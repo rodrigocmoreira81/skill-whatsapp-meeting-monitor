@@ -20,7 +20,7 @@ Watermark é avançado ANTES de classificar replies — garante idempotência.
 Se `modality` ainda é `tbd` (pedido não disse se quer presencial ou online):
 
 - Reply contém `online|meet|video|call|chamada` → `set-modality meet`
-- Reply contém `savassi|escritório|hiker|<office>` → `set-modality presencial_hiker`
+- Reply contém `escritorio|office|<seu_keyword>` → `set-modality presencial_office`
 - Reply contém `presencial` mas sem local claro → followup "Onde?"
 - Reply confirma slot/email mas sem indicar preferência → followup "Online ou presencial?"
 

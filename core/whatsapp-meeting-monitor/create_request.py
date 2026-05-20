@@ -5,7 +5,7 @@ Idempotente: se id existe, retorna existente sem sobrescrever.
 
 Uso:
   python3 create_request.py --jid <jid> --name <contact> --snippet <snippet> \
-    --modality <meet|presencial_hiker|presencial_outro|tbd> \
+    --modality <meet|presencial_office|presencial_outro|tbd> \
     --slack-ts <ts> --last-inbound-iso <iso>
 """
 import os
@@ -27,7 +27,7 @@ def main():
     ap.add_argument("--name", required=True)
     ap.add_argument("--snippet", required=True)
     ap.add_argument("--modality", default="meet",
-                    choices=["meet", "presencial_hiker", "presencial_outro", "almoco", "brokered", "tbd"])
+                    choices=["meet", "presencial_office", "presencial_outro", "almoco", "brokered", "tbd"])
     ap.add_argument("--target-contact", default=None,
                     help="Em brokered: nome do terceiro com quem se quer reunir")
     ap.add_argument("--broker-mode", default=None,

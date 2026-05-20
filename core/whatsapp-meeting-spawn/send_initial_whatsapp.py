@@ -18,7 +18,10 @@ from urllib import request, parse, error
 BASE = os.environ.get("EVOLUTION_BASE_URL", "")
 INSTANCE = os.environ.get("EVOLUTION_INSTANCE", "")
 REQUESTS_DIR = os.path.join(os.environ.get("WORKSPACE_DIR", os.environ.get("WORKSPACE_DIR", "/root/.openclaw/workspace")), "memory/meeting-requests")
-LUNCH_VENUES = [("Moema", "Moema Bar e Cozinha"), ("Maru", "Maru Bar Japones")]
+LUNCH_VENUES = [  # Adapte aos seus locais preferidos
+    ("Local A", "Nome do Local A"),
+    ("Local B", "Nome do Local B"),
+]
 
 
 def first_name(s):
@@ -73,7 +76,7 @@ def greeting_for(contact, jid=None, api_key=None):
     female_first_names = {
         "rafa", "rafaela", "ana", "maria", "julia", "juliana", "mariana", "carolina",
         "carla", "fernanda", "laura", "luiza", "beatriz", "bianca", "camila", "thais",
-        "bruna", "renata", "patricia", "leticia", "gabriela", "giovanna", "sthella",
+        "bruna", "renata", "patricia", "leticia", "gabriela", "giovanna",
     }
     return f"Ei {name}" if name.lower() in female_first_names else f"Fala {name}"
 
@@ -94,7 +97,7 @@ def compose(contact, modality, slots, location_text=None, location_short=None, e
             f"{slot_lines}\n\n"
             f"Alguma funciona? Sugiro {local}. Me confirma qual dia e te mando o invite."
         )
-    if modality == "presencial_hiker":
+    if modality == "presencial_office":
         return (
             f"{greet},\n\n"
             f"Bora marcar. Tenho essas opcoes:\n"

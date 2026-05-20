@@ -5,7 +5,7 @@ Idempotente: se status já não é pending_approval, retorna ok sem alterar.
 
 Uso:
   python3 approve_request.py --id <id> --action <sim|nao|eu_marco> \
-    [--modality meet|presencial_hiker|presencial_outro|tbd] \
+    [--modality meet|presencial_office|presencial_outro|tbd] \
     [--duration 30|60] [--user-msg "..."] [--free-text "..."]
 """
 import os
@@ -26,7 +26,7 @@ def main():
     ap.add_argument("--id", required=True)
     ap.add_argument("--action", required=True, choices=list(STATUS_MAP.keys()))
     ap.add_argument("--modality", default=None,
-                    choices=["meet", "presencial_hiker", "presencial_outro", "almoco", "tbd"])
+                    choices=["meet", "presencial_office", "presencial_outro", "almoco", "tbd"])
     ap.add_argument("--duration", type=int, default=60)
     ap.add_argument("--user-msg", default="")
     ap.add_argument("--free-text", default="",

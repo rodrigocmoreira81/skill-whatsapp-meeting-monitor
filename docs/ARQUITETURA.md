@@ -55,7 +55,7 @@ A skill foi desenhada pra rodar dentro do **Russ** (CoS pessoal do Rodrigo Morei
        ▼
 ┌──────────────────────────────────────┐
 │  Você (Slack)                        │
-│  - reage 👍 / responde "sim hiker"   │
+│  - reage 👍 / responde "sim escritorio"   │
 └──────┬───────────────────────────────┘
        │
        ▼

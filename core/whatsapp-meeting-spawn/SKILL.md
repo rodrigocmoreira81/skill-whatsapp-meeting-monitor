@@ -19,7 +19,7 @@ exec(command="set -a && . /root/.openclaw/.env && set +a && python3 /root/.openc
 
 Esse script faz tudo:
 1. `check_calendar_slots.py` (busca 3 slots reais; usa `--lunch` se modality=almoco)
-2. `send_initial_whatsapp.py` (envia mensagem real pro contato; grava slots_offered, last_outbound_*, expires_at_utc, status=monitoring; sorteia Moema/Maru se almoço)
+2. `send_initial_whatsapp.py` (envia mensagem real pro contato; grava slots_offered, last_outbound_*, expires_at_utc, status=monitoring; sorteia um local de almoço se almoço)
 3. `openclaw cron add` com payload de monitor genérico (`monitor_payload_template.txt`), cadência `*/15 8-22 * * *`
 4. Grava `monitor_cron_id` no JSON
 
