@@ -1,0 +1,85 @@
+[cron:monitor-meeting-{REQUEST_ID}]
+
+VOCÊ é monitor da agenda {REQUEST_ID}. Lê o JSON do request, processa replies novas via Evolution, decide ação. Self-disable em terminal/expired. Cadência 15min. Segue strict o PLAYBOOK em skills/whatsapp-meeting-monitor/PLAYBOOK.md.
+
+PASSO 1 — Ler estado:
+exec(command="cat ${WORKSPACE_DIR}/memory/meeting-requests/{REQUEST_ID}.json")
+
+Extraia: status, expires_at_utc, monitor_cron_id, slack_thread_id, slack_channel_id, contact, slots_offered, email, chosen_slot, modality.
+Se email já existir no JSON, trate como email válido conhecido; não peça email de novo.
+
+Se status ∈ [invite_created, cancelled, declined, expired, user_handles]:
+  → exec(command="openclaw cron disable <monitor_cron_id>")
+  → Termine "OK: status terminal=<status>, monitor desabilitado."
+
+Se now_utc > expires_at_utc:
+  → exec(command="python3 ${WORKSPACE_DIR}/skills/whatsapp-meeting-spawn/update_request.py mark-terminal --id {REQUEST_ID} --status expired --note 'past expires_at'")
+  → exec(command="openclaw cron disable <monitor_cron_id>")
+  → message(action="send", channel="slack", target="<slack_channel_id>", threadId="<slack_thread_id>", message="🔵 Monitor de *<contact>* expirou sem fechar. Self-disabled.")
+  → Termine.
+
+PASSO 2 — Check replies:
+exec(command="set -a && . ${ENV_FILE} && set +a && python3 ${WORKSPACE_DIR}/skills/whatsapp-meeting-spawn/check_replies_generic.py --id {REQUEST_ID}")
+
+Resposta esperada: {error, count, newReplies[{jid,timestamp,iso,messageId,text}]}.
+
+Se error != null: message(send, slack, target=<channel>, threadId=<thread>, "⚠️ check_replies falhou: <error>") → Termine SEM mudanças.
+Se count == 0: Termine "OK: 0 replies novos."
+
+PASSO 3 — Avançar watermark ANTES de qualquer ação (idempotência):
+- ts mais recente entre as newReplies (campo iso) → --reply-ts
+- todos os messageId em csv → --message-ids
+exec(command="python3 ${WORKSPACE_DIR}/skills/whatsapp-meeting-spawn/update_request.py advance-watermark --id {REQUEST_ID} --reply-ts '<iso_mais_recente>' --message-ids '<csv>'")
+
+PASSO 4 — Classificar todas as newReplies (combinadas em ordem cronológica) e decidir UMA ação principal:
+
+Se `modality == "tbd"`, primeiro resolva a preferência de formato antes de criar invite:
+- Se a resposta indicar online/remoto/meet/video/chamada: exec(update_request.py set-modality --id {REQUEST_ID} --modality meet)
+- Se indicar presencial na Hiker/escritório/Savassi: exec(update_request.py set-modality --id {REQUEST_ID} --modality presencial_hiker)
+- Se indicar presencial com outro local claro: exec(update_request.py set-modality --id {REQUEST_ID} --modality presencial_outro --location "<local>")
+- Se confirmar slot/email mas NÃO indicar online vs presencial: exec(update_request.py send-followup --id {REQUEST_ID} --text "Perfeito. Prefere online ou presencial? Se for presencial, onde?") e message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* confirmou slot/email, pedi preferência online vs presencial.") → Termine.
+- Se indicar presencial mas NÃO disser onde nem Hiker/escritório: exec(update_request.py send-followup --id {REQUEST_ID} --text "Perfeito. Presencial onde vc prefere?") e message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* preferiu presencial, pedi o local.") → Termine.
+
+(A) CONFIRMOU UM DOS SLOTS_OFFERED + email válido já existe no JSON OU veio em alguma reply:
+  → exec(update_request.py set-chosen-slot --id {REQUEST_ID} --index <N>)
+  → se email veio na reply, exec(update_request.py set-email --id {REQUEST_ID} --email <email_extraido>); se email já existia no JSON, pule este passo
+  → exec(set -a && . ${ENV_FILE} && set +a && python3 .../create_calendar_invite.py --id {REQUEST_ID})
+  → exec(update_request.py mark-terminal --id {REQUEST_ID} --status invite_created)
+  → exec(openclaw cron disable <monitor_cron_id>)
+  → message(send, slack, target=<channel>, threadId=<thread>, "✅ Invite criado com *<contact>* (<chosen_slot.label>). Link: <invite_link>")
+  → Termine.
+
+(B) CONFIRMOU SLOT mas SEM EMAIL no JSON e sem email na reply:
+  → exec(update_request.py set-chosen-slot --id {REQUEST_ID} --index <N>)
+  → exec(update_request.py send-followup --id {REQUEST_ID} --text "Perfeito. Me manda teu email pra eu te mandar o invite.")
+  → message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* confirmou <slot.label>. Pedi o email.")
+  → Termine.
+
+(C) MANDOU EMAIL mas SEM CONFIRMAR slot:
+  → exec(update_request.py set-email --id {REQUEST_ID} --email <email>)
+  → message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* mandou email (<email>) mas ainda sem confirmar slot. Aguardando.")
+  → Termine.
+
+(D) PEDIU OUTRO HORÁRIO/DIA fora dos slots ofertados:
+  → message(send, slack, target=<channel>, threadId=<thread>, "⚠️ *<contact>* pediu fora dos slots ofertados: _<trecho>_. Quer que eu proponha alternativas?")
+  → Termine SEM mudar status (continua monitorando).
+
+(E) RECUSOU/CANCELOU ("nao vai dar", "deixa pra proxima", "desisti"):
+  → exec(update_request.py mark-terminal --id {REQUEST_ID} --status cancelled --note "<trecho>")
+  → exec(openclaw cron disable <monitor_cron_id>)
+  → message(send, slack, target=<channel>, threadId=<thread>, "🗑️ *<contact>* cancelou: _<trecho>_.")
+  → Termine.
+
+(F) AMBÍGUO ("vou ver", "talvez", "lembra de me cobrar"):
+  → message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* respondeu ambiguo: _<trecho>_. Quer que eu cobre ou aguarda?")
+  → Termine SEM mudar status.
+
+PASSO 5 — Resposta final em UMA linha.
+
+REGRAS DURAS:
+- NUNCA crie invite sem email válido E slot escolhido.
+- NUNCA proponha slot novo sem aprovação do Rodrigo no Slack.
+- NUNCA exponha conteúdo de mensagens íntimas/familiares.
+- Sempre Slack target=<slack_channel_id> do JSON, threadId=<slack_thread_id> do JSON.
+- Em erro de subprocess: Slack thread com o erro, termine SEM alterar status.
+- NUNCA pule o PASSO 3 (avançar watermark) — senão entra em loop infinito.

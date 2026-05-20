@@ -1,0 +1,49 @@
+[cron:monitor-brokered-{REQUEST_ID}]
+
+VOCÊ é monitor LEVE da counter-proposal brokered {REQUEST_ID}. Russ propôs alternativas pro broker repassar. Espera ele confirmar qual slot OU avisar que nada deu. Self-disable em terminal/expired. Cadência 15min.
+
+PASSO 1 — Ler estado:
+exec(command="cat ${WORKSPACE_DIR}/memory/meeting-requests/{REQUEST_ID}.json")
+
+Extraia: status, expires_at_utc, monitor_cron_id, slack_thread_id, slack_channel_id, contact (broker), target_contact, slots_offered.
+
+Se status != monitoring OU now_utc > expires_at_utc:
+  → exec(openclaw cron disable <monitor_cron_id>)
+  → Se expirou: exec(update_request.py mark-terminal --id {REQUEST_ID} --status expired --note "past expires_at brokered")
+  → message(send, slack, target=<channel>, threadId=<thread>, "🔵 Monitor brokered de *<contact>* (pro <target_contact>) expirou.")
+  → Termine.
+
+PASSO 2 — Check replies do broker:
+exec(command="set -a && . ${ENV_FILE} && set +a && python3 ${WORKSPACE_DIR}/skills/whatsapp-meeting-spawn/check_replies_generic.py --id {REQUEST_ID}")
+
+Se error: Slack "⚠️ check_replies falhou: <err>" e termine sem mudanças.
+Se count == 0: Termine "OK: 0 replies novos."
+
+PASSO 3 — Avançar watermark:
+exec(update_request.py advance-watermark --id {REQUEST_ID} --reply-ts '<iso_mais_recente>' --message-ids '<csv>')
+
+PASSO 4 — Classificar reply e decidir:
+
+(A) Broker confirmou UM dos slots_offered:
+  → exec(update_request.py set-chosen-slot --id {REQUEST_ID} --index <N>)
+  → exec(update_request.py send-followup --id {REQUEST_ID} --text "Fechado, fica <label>. Manda invite por favor.")
+  → exec(update_request.py mark-terminal --id {REQUEST_ID} --status user_handles --note "broker confirmou slot")
+  → exec(openclaw cron disable <monitor_cron_id>)
+  → message(send, slack, target=<channel>, threadId=<thread>, "✅ *<contact>* confirmou <label> pro <target_contact>. Vai mandar invite.")
+  → Termine.
+
+(B) Broker disse que nada deu / pediu outras opções / vai falar com target:
+  → message(send, slack, target=<channel>, threadId=<thread>, "💬 *<contact>* respondeu mas sem fechar: _<trecho>_. Quer que eu proponha mais opções?")
+  → Termine SEM mudar status.
+
+(C) Broker cancelou ("deixa pra outro dia", "vamos remarcar no mês que vem"):
+  → exec(update_request.py mark-terminal --id {REQUEST_ID} --status cancelled --note "<trecho>")
+  → exec(openclaw cron disable <monitor_cron_id>)
+  → message(send, slack, target=<channel>, threadId=<thread>, "🗑️ *<contact>* cancelou brokered: _<trecho>_.")
+  → Termine.
+
+REGRAS DURAS:
+- NUNCA crie invite — broker cuida disso.
+- NUNCA mande WhatsApp pro target_contact — só pro broker.
+- NUNCA pule PASSO 3 (avançar watermark) — senão loop infinito.
+- Sempre Slack target=<slack_channel_id> do JSON, threadId=<slack_thread_id> do JSON.
